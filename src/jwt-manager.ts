@@ -1,4 +1,4 @@
-import { jwtDecode, type JwtPayload } from 'jwt-decode';
+import { jwtDecode, JwtPayload } from 'jwt-decode';
 
 class JwtManager<PayloadOverload extends JwtPayload> {
   /**
@@ -90,8 +90,8 @@ class JwtManager<PayloadOverload extends JwtPayload> {
     key: string,
     storageType: 'session' | 'local' = 'session',
   ) {
-    this.#storageType = storageType;
     this.#key = key;
+    this.#storageType = storageType;
   }
 
   /**
@@ -113,9 +113,7 @@ class JwtManager<PayloadOverload extends JwtPayload> {
       return false;
     }
 
-    const currentTime = Math.floor(Date.now() / 1000);
-
-    return decoded.exp < currentTime;
+    return decoded.exp < Math.floor(Date.now());
   }
 }
 
