@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert';
-import { JSDOM } from 'jsdom';
 import {JwtManager} from '@garbee/jwt/manager.js';
 import {createMockJwt} from '@garbee/jwt/create-mock.js';
 
@@ -13,18 +12,38 @@ declare global {
   }
 }
 
+
+const makeMockStorage = () =>  { return {
+  storage: {} as Record<string, string>,
+  get length(): number {
+    return Object.keys(this.storage).length;
+  },
+  key(index: number): string | null {
+    const keys = Object.keys(this.storage);
+    return keys[index] || null;
+  },
+  getItem(key: string): string | null {
+    return this.storage[key] || null;
+  },
+  setItem(key: string, value: string): void {
+    this.storage[key] = value;
+  },
+  removeItem(key: string): void {
+    delete this.storage[key];
+  },
+  clear(): void {
+    this.storage = {};
+  },
+}};
+
 describe('JwtManager', () => {
   let jwtManInstance: JwtManager<object>;
-  let dom: JSDOM;
 
   beforeEach(() => {
-    dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
-      url: "http://localhost/",
-    });
-
     // @ts-expect-error
-    global.window = dom.window as unknown as Window;
-    global.document = dom.window.document as Document;
+    global.window = {};
+    global.window.sessionStorage = makeMockStorage();
+    global.window.localStorage = makeMockStorage();
 
     mock.timers.enable({
       apis: ['setInterval', 'setTimeout', 'setImmediate', 'Date'],
@@ -35,14 +54,8 @@ describe('JwtManager', () => {
   });
 
   afterEach(() => {
-    if (dom) {
-      dom.window.close();
-    }
-
     // @ts-expect-error
     delete global.window;
-    // @ts-expect-error
-    delete global.document;
 
     mock.timers.reset();
   });
