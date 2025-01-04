@@ -1,4 +1,6 @@
-import { jwtDecode, JwtPayload } from 'jwt-decode';
+import { jwtDecode, type JwtPayload } from 'jwt-decode';
+import { CriteriaNotBeforeError } from './errors/criteria-not-before.ts';
+import { TokenExpired } from './errors/token-expired.ts';
 
 class JwtManager<PayloadOverload extends JwtPayload> {
   /**
@@ -26,10 +28,10 @@ class JwtManager<PayloadOverload extends JwtPayload> {
    */
   get storage(): Storage {
     if (this.#storageType === 'local') {
-      return localStorage;
+      return window.localStorage;
     }
 
-    return sessionStorage;
+    return window.sessionStorage;
   }
 
   /**
@@ -40,10 +42,7 @@ class JwtManager<PayloadOverload extends JwtPayload> {
    * the storage system configured at initialization.
    */
   set token(value: string) {
-    if (this.#hasExpired(value)) {
-      console.error('An expired JWT was given to be stored.');
-      return;
-    }
+    this.#isValidTime(value);
 
     this.storage.setItem(this.#key, value);
   }
@@ -62,10 +61,12 @@ class JwtManager<PayloadOverload extends JwtPayload> {
       return undefined;
     }
 
-    if (this.#hasExpired(token)) {
+    try {
+      this.#isValidTime(token);
+    } catch {
       this.storage.removeItem(this.#key);
 
-      return undefined;
+      return undefined
     }
 
     return token;
@@ -86,6 +87,40 @@ class JwtManager<PayloadOverload extends JwtPayload> {
     return this.#decode(token);
   }
 
+  /**
+   * Retrieve the issuer of the JWT if it is present.
+   */
+  get issuer(): string | undefined {
+    return this.data?.iss;
+  }
+
+  /**
+   * Retrieve the expiration time of the JWT if it is present.
+   */
+  get expirationTime(): number | undefined {
+    return this.data?.exp;
+  }
+
+  get subject(): string | undefined {
+    return this.data?.sub;
+  }
+
+  get audience(): string | string[] | undefined {
+    return this.data?.aud;
+  }
+
+  get notBefore(): number | undefined {
+    return this.data?.nbf;
+  }
+
+  get issuedAt(): number | undefined {
+    return this.data?.iat;
+  }
+
+  get jwtId(): string | undefined {
+    return this.data?.jti;
+  }
+
   constructor(
     key: string,
     storageType: 'session' | 'local' = 'session',
@@ -102,18 +137,30 @@ class JwtManager<PayloadOverload extends JwtPayload> {
   }
 
   /**
-   * Determine the expiration state based on the `exp` field.
-   * If the field is not present, the token is valid
-   * indefinitely. Otherwise, compare against current time.
+   * Determine the validity based on the `exp` and `nbf`
+   * fields. If the `nbf` field is present, verify the current
+   * time is after it. If the `exp` field is not present,
+   * the token is valid indefinitely. Otherwise, compare
+   * `exp` against current time to ensure it has not passed.
    */
-  #hasExpired(token: string): boolean {
+  #isValidTime(token: string): void {
     const decoded = this.#decode(token);
+    const currentTime = Math.floor(Date.now() / 1000);
 
-    if (!decoded.exp) {
-      return false;
+    if (
+      decoded.nbf &&
+      currentTime < decoded.nbf
+    ) {
+        throw new CriteriaNotBeforeError(decoded.nbf, currentTime);
     }
 
-    return decoded.exp < Math.floor(Date.now());
+    if (!decoded.exp) {
+      return undefined;
+    }
+
+    if(decoded.exp <= currentTime) {
+      throw new TokenExpired(decoded.exp, currentTime);
+    }
   }
 }
 

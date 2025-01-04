@@ -1,0 +1,367 @@
+import { afterEach, beforeEach, describe, it } from 'node:test';
+import assert from 'node:assert';
+import { JSDOM } from 'jsdom';
+import sinon from 'sinon'
+import { JwtManager } from './jwt-manager.ts';
+import {createMockJwt} from '../tests/fixtures/create-jwt.ts';
+
+declare global {
+  namespace NodeJS {
+    interface Global {
+      window: Window;
+      document: Document;
+    }
+  }
+}
+
+describe('JwtManager', () => {
+  let jwtManInstance: JwtManager<object>;
+  let dom: JSDOM;
+  let clock: sinon.SinonFakeTimers;
+
+  beforeEach(() => {
+    dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
+      url: "http://localhost/",
+    });
+
+    // @ts-expect-error
+    global.window = dom.window as unknown as Window;
+    global.document = dom.window.document as Document;
+
+    clock = sinon.useFakeTimers({
+      now: new Date(),
+      shouldAdvanceTime: false,
+    });
+
+    jwtManInstance = new JwtManager('auth_token');
+  });
+
+  afterEach(() => {
+    if (dom) {
+      dom.window.close();
+    }
+
+    // @ts-expect-error
+    delete global.window;
+    // @ts-expect-error
+    delete global.document;
+
+    clock.restore();
+  });
+
+
+  it('can store jwt',  () => {
+    const jwtPayload = {
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor((Date.now() + 2000) / 1000),
+      name: 'can store jwt Test',
+      sub: '123',
+    };
+
+    const mockJwt = createMockJwt(jwtPayload);
+
+    jwtManInstance.token = mockJwt;
+
+    assert.strictEqual(window.sessionStorage.getItem('auth_token'), mockJwt);
+    assert.strictEqual(jwtManInstance.token, mockJwt);
+  });
+
+  describe('isValidTime', () => {
+    it('checks not before time', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor((Date.now() + 5000) / 1000),
+        name: 'checks not before time Test',
+        sub: '123',
+        nbf: Math.floor((Date.now() + 2000) / 1000),
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+
+      assert.throws(() => {
+        jwtManInstance.token = mockJwt;
+      });
+      assert.strictEqual(jwtManInstance.token, undefined);
+    });
+
+    it('checks expiration time', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor((Date.now() + 1000) / 1000),
+        name: 'checks expiration time Test',
+        sub: '123',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.token, mockJwt);
+
+      clock.tick('00:02');
+
+      assert.strictEqual(jwtManInstance.token, undefined);
+    });
+  });
+
+  describe('retrieves properties when set', () => {
+    it('expirationTime', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor((Date.now() + 3000) / 1000),
+        name: 'expiration time set Test',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.expirationTime, jwtPayload.exp);
+    });
+
+    it('issuer', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor((Date.now() + 3000) / 1000),
+        name: 'issuer set Test',
+        iss: '123',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.issuer, '123');
+    });
+
+    it('subject', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor((Date.now() + 3000) / 1000),
+        name: 'subject set Test',
+        sub: '123',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.subject, '123');
+    });
+
+    it('audience', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor((Date.now() + 3000) / 1000),
+        name: 'audience set Test',
+        aud: '123',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.audience, '123');
+    });
+
+    it('notBefore', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor((Date.now() + 6000) / 1000),
+        name: 'not before set Test',
+        nbf: Math.floor((Date.now() + 2000) / 1000),
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+
+      clock.tick('00:02');
+
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(
+        jwtManInstance.notBefore,
+        jwtPayload.nbf,
+      );
+    });
+
+    it('issuedAt', () => {
+      const jwtPayload = {
+        exp: Math.floor((Date.now() + 3000) / 1000),
+        name: 'issued at set Test',
+        iat: Math.floor(Date.now() / 1000),
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.issuedAt, Math.floor(Date.now() / 1000));
+    });
+
+    it('jwtId', () => {
+      const jwtPayload = {
+        exp: Math.floor((Date.now() + 3000) / 1000),
+        name: 'jwt id set Test',
+        jti: '123',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.jwtId, '123');
+    });
+  });
+
+  describe('retrieves undefined for properties when not set', () => {
+    it('expirationTime', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        name: 'expiration time not set Test',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.expirationTime, undefined);
+    });
+
+    it('issuer', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        name: 'issuer not set Test',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.issuer, undefined);
+    });
+
+    it('subject', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        name: 'subject not set Test',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.subject, undefined);
+    });
+
+    it('audience', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        name: 'audience not set Test',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.audience, undefined);
+    });
+
+    it('notBefore', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        name: 'not before not set Test',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.notBefore, undefined);
+    });
+
+    it('issuedAt', () => {
+      const jwtPayload = {
+        name: 'issued at not set Test',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.issuedAt, undefined);
+    });
+
+    it('jwtId', () => {
+      const jwtPayload = {
+        name: 'jwtId not set',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(jwtManInstance.jwtId, undefined);
+    });
+  });
+
+  describe('storage type is configurable', () => {
+
+    it('can use localStorage', () => {
+      const jwtManInstance = new JwtManager('auth_token', 'local');
+
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor((Date.now() + 2000) / 1000),
+        name: 'can store jwt Test',
+        sub: '123',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(window.localStorage.getItem('auth_token'), mockJwt);
+      assert.strictEqual(jwtManInstance.token, mockJwt);
+      assert.strictEqual(jwtManInstance.storageType, 'local');
+    });
+
+    it('can use sessionStorage', () => {
+      const jwtManInstance = new JwtManager('auth_token', 'session');
+
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor((Date.now() + 2000) / 1000),
+        name: 'can store jwt Test',
+        sub: '123',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+
+      jwtManInstance.token = mockJwt;
+
+      assert.strictEqual(window.sessionStorage.getItem('auth_token'), mockJwt);
+      assert.strictEqual(jwtManInstance.token, mockJwt);
+      assert.strictEqual(jwtManInstance.storageType, 'session');
+    });
+  });
+
+  describe('data can be retrieved', () => {
+    it('returns the data object', () => {
+      const jwtPayload = {
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor((Date.now() + 2000) / 1000),
+        name: 'can store jwt Test',
+        sub: '123',
+      };
+
+      const mockJwt = createMockJwt(jwtPayload);
+
+      jwtManInstance.token = mockJwt;
+
+      assert.deepStrictEqual(jwtManInstance.data, jwtPayload);
+    });
+  });
+
+  it('returns undefined when the token is invalid', () => {
+    const jwtPayload = {
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor((Date.now() + 2000) / 1000),
+      name: 'can store jwt Test',
+      sub: '123',
+    };
+
+    const mockJwt = createMockJwt(jwtPayload);
+
+    jwtManInstance.token = mockJwt;
+
+    clock.tick('00:02');
+
+    assert.strictEqual(jwtManInstance.data, undefined);
+  });
+});

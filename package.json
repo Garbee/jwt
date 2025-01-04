@@ -4,16 +4,26 @@
   "description": "A class to control JWT token access.",
   "type": "module",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --outfile=index.js",
+    "test": "npx c8 node --import=tsx src/jwt-manager.test.ts"
+  },
   "author": "Jonathan Garbee <jonathan@garbee.me>",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.49.1",
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^22.10.3",
-    "esbuild": "^0.24.2",
+    "@types/sinon": "^17.0.3",
+    "c8": "^10.1.3",
+    "jsdom": "^25.0.1",
+    "sinon": "^19.0.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   },
   "dependencies": {
     "jwt-decode": "^4.0.0"
+  },
+  "c8": {
+    "reporter": ["html", "json", "lcov"]
   }
 }
