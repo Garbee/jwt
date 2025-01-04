@@ -9,8 +9,8 @@
       "default": "./dist/manager.js"
     },
     "./create-mock.js": {
-      "types": "./dist/helpers/create-jwt.d.ts",
-      "default": "./dist/helpers/create-jwt.js"
+      "types": "./dist/helpers/create-mock.d.ts",
+      "default": "./dist/helpers/create-mock.js"
     }
   },
   "imports": {
