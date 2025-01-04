@@ -9,6 +9,12 @@ import { TokenExpired } from '#errors/token-expired.js';
  */
 class JwtManager<PayloadOverload extends JwtPayload> {
   /**
+   * Enable debug mode to log information for triage of
+   * issues.
+   */
+  static debugMode = false;
+
+  /**
    * The local storage system to use for keeping the token.
    * Defaults to session storage so it expires by default
    * with the session for the simplest security system.
@@ -72,6 +78,7 @@ class JwtManager<PayloadOverload extends JwtPayload> {
     try {
       this.#isValidTime(token);
     } catch {
+      console.info('JWT 002: The token has expired. It is removed from storage.')
       this.storage.removeItem(this.#key);
 
       return undefined
@@ -153,6 +160,15 @@ class JwtManager<PayloadOverload extends JwtPayload> {
   ) {
     this.#key = key;
     this.#storageType = storageType;
+
+    if (JwtManager.debugMode) {
+      console.info(
+        'JWT 001: initialized with storage key:',
+        key,
+        ' and using storage type: ',
+        storageType,
+      );
+    }
   }
 
   /**
@@ -181,6 +197,11 @@ class JwtManager<PayloadOverload extends JwtPayload> {
     }
 
     if (!decoded.exp) {
+      if (JwtManager.debugMode) {
+        console.warn(
+          'JWT 021: A token was provided that had no expiration time. This can be a security risk since if the token leaks it is valid indefinitely.',
+        );
+      }
       return undefined;
     }
 
@@ -192,4 +213,5 @@ class JwtManager<PayloadOverload extends JwtPayload> {
 
 export {
   JwtManager,
+  type JwtPayload,
 };
