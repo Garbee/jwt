@@ -26,13 +26,14 @@
   "files": [
     "dist",
     "package-lock.json",
-    "package.json"
+    "package.json",
+    "readme.md"
   ],
   "scripts": {
     "prebuild": "del-cli dist",
     "build": "npx tsc",
     "pretest": "npm run build",
-    "test": "npx c8 node --import=tsx src/manager.test.ts"
+    "test": "npx c8 node --test --experimental-strip-types"
   },
   "author": "Jonathan Garbee <jonathan@garbee.me>",
   "license": "MIT",
@@ -43,7 +44,6 @@
     "c8": "^10.1.3",
     "del-cli": "^6.0.0",
     "jsdom": "^25.0.1",
-    "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   },
   "c8": {

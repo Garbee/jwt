@@ -31,7 +31,7 @@ SOFTWARE.
 
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import {jwtDecode, type JwtPayload, InvalidTokenError} from './decode.ts';
+import {jwtDecode, type JwtPayload, InvalidTokenError} from '#jwt-decode.js';
 
 const token =
   "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmb28iOiJiYXIiLCJleHAiOjEzOTMyODY4OTMsImlhdCI6MTM5MzI2ODg5M30.4-iaDojEVl0pJQMjrbM1EzUIfAZgsbK_kgnVyVxFSVo";
