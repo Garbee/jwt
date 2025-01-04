@@ -30,7 +30,7 @@
     "readme.md"
   ],
   "scripts": {
-    "prebuild": "del-cli dist",
+    "prebuild": "node bin/del.js ./dist",
     "build": "npx tsc",
     "pretest": "npm run build",
     "test": "npx c8 node --test --experimental-strip-types"
@@ -40,7 +40,6 @@
   "devDependencies": {
     "@types/node": "^22.10.3",
     "c8": "^10.1.3",
-    "del-cli": "^6.0.0",
     "typescript": "^5.7.2"
   },
   "c8": {
