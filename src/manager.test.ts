@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert';
 import { JSDOM } from 'jsdom';
 import sinon from 'sinon'
-import {JwtManager} from './jwt-manager.js';
-import {createMockJwt} from './helpers/create-jwt.js';
+import {JwtManager} from '@garbee/jwt/manager.js';
+import {createMockJwt} from '@garbee/jwt/create-mock.js';
 
 declare global {
   namespace NodeJS {

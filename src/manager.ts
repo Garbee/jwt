@@ -1,6 +1,6 @@
 import { jwtDecode, type JwtPayload } from 'jwt-decode';
-import { CriteriaNotBeforeError } from './errors/criteria-not-before.ts';
-import { TokenExpired } from './errors/token-expired.ts';
+import { CriteriaNotBeforeError } from '#errors/criteria-not-before.js';
+import { TokenExpired } from '#errors/token-expired.js';
 
 /**
  * A manager for handling JWT tokens in the browser. This

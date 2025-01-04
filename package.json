@@ -5,12 +5,18 @@
   "type": "module",
   "exports": {
     "./manager.js": {
-      "types": "./dist/src/jwt-manager.d.ts",
-      "default": "./dist/src/jwt-manager.js"
+      "types": "./dist/manager.d.ts",
+      "default": "./dist/manager.js"
     },
     "./create-mock.js": {
-      "types": "./dist/src/helpers/create-jwt.d.ts",
-      "default": "./dist/src/helpers/create-jwt.js"
+      "types": "./dist/helpers/create-jwt.d.ts",
+      "default": "./dist/helpers/create-jwt.js"
+    }
+  },
+  "imports": {
+    "#errors/*.js": {
+      "types": "./dist/errors/*.d.ts",
+      "default": "./dist/errors/*.js"
     }
   },
   "files": [
@@ -21,7 +27,8 @@
   "scripts": {
     "prebuild": "del-cli dist",
     "build": "npx tsc",
-    "test": "npx c8 node --import=tsx src/jwt-manager.test.ts"
+    "pretest": "npm run build",
+    "test": "npx c8 node --import=tsx src/manager.test.ts"
   },
   "author": "Jonathan Garbee <jonathan@garbee.me>",
   "license": "MIT",
