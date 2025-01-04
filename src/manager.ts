@@ -1,5 +1,5 @@
 import { jwtDecode, type JwtPayload } from 'jwt-decode';
-import { CriteriaNotBeforeError } from '#errors/criteria-not-before.js';
+import { CriteriaNotBefore } from '#errors/criteria-not-before.js';
 import { TokenExpired } from '#errors/token-expired.js';
 
 /**
@@ -37,7 +37,7 @@ class JwtManager<PayloadOverload extends JwtPayload> {
   /**
    * Get the storage system from the browser.
    */
-  get storage(): Storage {
+  get #storage(): Storage {
     if (this.#storageType === 'local') {
       return window.localStorage;
     }
@@ -58,7 +58,7 @@ class JwtManager<PayloadOverload extends JwtPayload> {
   set token(value: string) {
     this.#isValidTime(value);
 
-    this.storage.setItem(this.#key, value);
+    this.#storage.setItem(this.#key, value);
   }
 
   /**
@@ -69,7 +69,7 @@ class JwtManager<PayloadOverload extends JwtPayload> {
    * returned.
    */
   get token(): string | undefined {
-    const token = this.storage.getItem(this.#key);
+    const token = this.#storage.getItem(this.#key);
 
     if (token === null) {
       return undefined;
@@ -78,8 +78,9 @@ class JwtManager<PayloadOverload extends JwtPayload> {
     try {
       this.#isValidTime(token);
     } catch {
-      console.info('JWT 002: The token has expired. It is removed from storage.')
-      this.storage.removeItem(this.#key);
+      this.#storage.removeItem(this.#key);
+
+      console.info('JWT 002: The token has expired or failed custom validation logic. It is removed from storage.')
 
       return undefined
     }
@@ -179,11 +180,20 @@ class JwtManager<PayloadOverload extends JwtPayload> {
   }
 
   /**
+   * Hook for consumers to provide custom validation logic.
+   * This is run after the time validation is complete and
+   * valid. This must throw errors if the token is invalid.
+   */
+  public customValidation(_tokenData: PayloadOverload): void {};
+
+  /**
    * Determine the validity based on the `exp` and `nbf`
    * fields. If the `nbf` field is present, verify the current
    * time is after it. If the `exp` field is not present,
    * the token is valid indefinitely. Otherwise, compare
    * `exp` against current time to ensure it has not passed.
+   * Finally, the custom validation is run to allow for
+   * any special case checking to be performed by consumers.
    */
   #isValidTime(token: string): void {
     const decoded = this.#decode(token);
@@ -193,7 +203,7 @@ class JwtManager<PayloadOverload extends JwtPayload> {
       decoded.nbf &&
       currentTime < decoded.nbf
     ) {
-        throw new CriteriaNotBeforeError(decoded.nbf, currentTime);
+        throw new CriteriaNotBefore(decoded.nbf, currentTime);
     }
 
     if (!decoded.exp) {
@@ -208,6 +218,8 @@ class JwtManager<PayloadOverload extends JwtPayload> {
     if(decoded.exp <= currentTime) {
       throw new TokenExpired(decoded.exp, currentTime);
     }
+
+    this.customValidation(decoded);
   }
 }
 

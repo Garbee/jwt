@@ -1,4 +1,4 @@
-class CriteriaNotBeforeError extends Error {
+class CriteriaNotBefore extends Error {
     notBefore: number;
     currentTime: number;
 
@@ -9,4 +9,4 @@ class CriteriaNotBeforeError extends Error {
     }
 }
 
-export {CriteriaNotBeforeError};
+export {CriteriaNotBefore};
