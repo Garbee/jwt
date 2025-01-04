@@ -10,12 +10,12 @@ are able to isolate their front-end tests from any
 back-end to help ensure a robust and reliable experience
 for people using the applications.
 
-There is a focus on keeping dependencies minimal. Right now,
-the only production dependency is `jwt-decode`. This
-remaining as a dependency will be based upon a deeper review
-of what the complexity is with the decode process. So long
-as there are no blockers with handling the algorithms, it
-will be removed in time.
+There are no production dependencies for this package. The
+only thing that was, jwt-decode, is licensed the same as
+this project. The code for that was copied, with attribution,
+to the Auth0 team of developers that created it. The license
+was put in place at the top of the two files as attribution
+to their hard efforts.
 
 ## Installation
 

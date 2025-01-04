@@ -17,6 +17,10 @@
     "#errors/*.js": {
       "types": "./dist/errors/*.d.ts",
       "default": "./dist/errors/*.js"
+    },
+    "#jwt-decode.js": {
+      "types": "./dist/helpers/decode.d.ts",
+      "default": "./dist/helpers/decode.js"
     }
   },
   "files": [
@@ -41,9 +45,6 @@
     "jsdom": "^25.0.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
-  },
-  "dependencies": {
-    "jwt-decode": "^4.0.0"
   },
   "c8": {
     "reporter": [

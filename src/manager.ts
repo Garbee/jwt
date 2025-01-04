@@ -1,4 +1,4 @@
-import { jwtDecode, type JwtPayload } from 'jwt-decode';
+import { jwtDecode, type JwtPayload } from '#jwt-decode.js';
 import { CriteriaNotBefore } from '#errors/criteria-not-before.js';
 import { TokenExpired } from '#errors/token-expired.js';
 
