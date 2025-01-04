@@ -7,11 +7,9 @@ declare global {
   namespace NodeJS {
     interface Global {
       window: Window;
-      document: Document;
     }
   }
 }
-
 
 const makeMockStorage = () =>  { return {
   storage: {} as Record<string, string>,
