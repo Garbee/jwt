@@ -1,7 +1,6 @@
-import { afterEach, beforeEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert';
 import { JSDOM } from 'jsdom';
-import sinon from 'sinon'
 import {JwtManager} from '@garbee/jwt/manager.js';
 import {createMockJwt} from '@garbee/jwt/create-mock.js';
 
@@ -17,7 +16,6 @@ declare global {
 describe('JwtManager', () => {
   let jwtManInstance: JwtManager<object>;
   let dom: JSDOM;
-  let clock: sinon.SinonFakeTimers;
 
   beforeEach(() => {
     dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
@@ -28,9 +26,9 @@ describe('JwtManager', () => {
     global.window = dom.window as unknown as Window;
     global.document = dom.window.document as Document;
 
-    clock = sinon.useFakeTimers({
+    mock.timers.enable({
+      apis: ['setInterval', 'setTimeout', 'setImmediate', 'Date'],
       now: new Date(),
-      shouldAdvanceTime: false,
     });
 
     jwtManInstance = new JwtManager('auth_token');
@@ -46,7 +44,7 @@ describe('JwtManager', () => {
     // @ts-expect-error
     delete global.document;
 
-    clock.restore();
+    mock.timers.reset();
   });
 
 
@@ -97,7 +95,7 @@ describe('JwtManager', () => {
 
       assert.strictEqual(jwtManInstance.token, mockJwt);
 
-      clock.tick('00:02');
+      mock.timers.tick(2000);
 
       assert.strictEqual(jwtManInstance.token, undefined);
     });
@@ -169,7 +167,7 @@ describe('JwtManager', () => {
 
       const mockJwt = createMockJwt(jwtPayload);
 
-      clock.tick('00:02');
+      mock.timers.tick(2000);
 
       jwtManInstance.token = mockJwt;
 
@@ -360,7 +358,7 @@ describe('JwtManager', () => {
 
     jwtManInstance.token = mockJwt;
 
-    clock.tick('00:02');
+    mock.timers.tick(2000);
 
     assert.strictEqual(jwtManInstance.data, undefined);
   });
