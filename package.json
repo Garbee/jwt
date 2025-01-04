@@ -4,8 +4,14 @@
   "description": "A class to control JWT token access.",
   "type": "module",
   "main": "index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/src/jwt-manager.js",
+      "types": "./dist/src/jwt-manager.d.ts"
+    }
+  },
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --platform=node --outfile=index.js",
+    "build": "npx tsc",
     "test": "npx c8 node --import=tsx src/jwt-manager.test.ts"
   },
   "author": "Jonathan Garbee <jonathan@garbee.me>",

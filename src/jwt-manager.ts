@@ -2,6 +2,11 @@ import { jwtDecode, type JwtPayload } from 'jwt-decode';
 import { CriteriaNotBeforeError } from './errors/criteria-not-before.ts';
 import { TokenExpired } from './errors/token-expired.ts';
 
+/**
+ * A manager for handling JWT tokens in the browser. This
+ * enforces the time constraints of a token at every access
+ * to ensure the token is valid before processing it.
+ */
 class JwtManager<PayloadOverload extends JwtPayload> {
   /**
    * The local storage system to use for keeping the token.
@@ -40,6 +45,9 @@ class JwtManager<PayloadOverload extends JwtPayload> {
    * If expired, the token will not be stored since it is
    * not usable. When the token is valid, it is stored in
    * the storage system configured at initialization.
+   *
+   * @throws CriteriaNotBeforeError when the token is set before it can be used.
+   * @throws TokenExpired when the token is expired making it invalid.
    */
   set token(value: string) {
     this.#isValidTime(value);
@@ -88,35 +96,53 @@ class JwtManager<PayloadOverload extends JwtPayload> {
   }
 
   /**
-   * Retrieve the issuer of the JWT if it is present.
+   * Identifies principal that issued the JWT.
    */
   get issuer(): string | undefined {
     return this.data?.iss;
   }
 
   /**
-   * Retrieve the expiration time of the JWT if it is present.
+   * Identifies the expiration time on and after which the
+   * JWT must not be accepted for processing.
    */
   get expirationTime(): number | undefined {
     return this.data?.exp;
   }
 
+  /**
+   * Identifies the subject of the JWT.
+   */
   get subject(): string | undefined {
     return this.data?.sub;
   }
 
+  /**
+   * Identifies the recipients that the JWT is intended for.
+   */
   get audience(): string | string[] | undefined {
     return this.data?.aud;
   }
 
+  /**
+   * Identifies the time on which the JWT will start to be
+   * accepted for processing.
+   */
   get notBefore(): number | undefined {
     return this.data?.nbf;
   }
 
+  /**
+   * Identifies the time at which the JWT was issued.
+   */
   get issuedAt(): number | undefined {
     return this.data?.iat;
   }
 
+  /**
+   * Case-sensitive unique identifier of the token even among
+   * different issuers.
+   */
   get jwtId(): string | undefined {
     return this.data?.jti;
   }
