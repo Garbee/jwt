@@ -1,16 +1,25 @@
 {
-  "name": "@garbee/jwt-manager",
+  "name": "@garbee/jwt",
   "version": "0.0.0",
-  "description": "A class to control JWT token access.",
+  "description": "Helpers related to JWT usage and testing.",
   "type": "module",
-  "main": "index.js",
   "exports": {
-    ".": {
-      "import": "./dist/src/jwt-manager.js",
-      "types": "./dist/src/jwt-manager.d.ts"
+    "./manager.js": {
+      "types": "./dist/src/jwt-manager.d.ts",
+      "default": "./dist/src/jwt-manager.js"
+    },
+    "./create-mock.js": {
+      "types": "./dist/src/helpers/create-jwt.d.ts",
+      "default": "./dist/src/helpers/create-jwt.js"
     }
   },
+  "files": [
+    "dist",
+    "package-lock.json",
+    "package.json"
+  ],
   "scripts": {
+    "prebuild": "del-cli dist",
     "build": "npx tsc",
     "test": "npx c8 node --import=tsx src/jwt-manager.test.ts"
   },
@@ -21,6 +30,7 @@
     "@types/node": "^22.10.3",
     "@types/sinon": "^17.0.3",
     "c8": "^10.1.3",
+    "del-cli": "^6.0.0",
     "jsdom": "^25.0.1",
     "sinon": "^19.0.2",
     "tsx": "^4.19.2",
@@ -30,6 +40,10 @@
     "jwt-decode": "^4.0.0"
   },
   "c8": {
-    "reporter": ["html", "json", "lcov"]
+    "reporter": [
+      "html",
+      "json",
+      "lcov"
+    ]
   }
 }
